@@ -14,12 +14,11 @@ class SMBClient:
     Wrapper around impacket's SMBConnection() object
     '''
 
-    def __init__(self, server, username, password, domain, nthash):
+    def __init__(self, server, username, password, domain, nthash, k, dc_ip):
 
         self.server = server
 
         self.conn = None
-
         self.username = username
         self.password = password
         self.domain = domain
@@ -28,7 +27,8 @@ class SMBClient:
             self.lmhash = 'aad3b435b51404eeaad3b435b51404ee'
         else:
             self.lmhash = ''
-
+        self.k = k
+        self.dc_ip = dc_ip
 
     @property
     def shares(self):
@@ -67,7 +67,10 @@ class SMBClient:
                     # skip to guest / null session
                     assert False
 
-                log.debug(f'{self.server}: Authenticating as "{self.domain}\\{self.username}"')
+                if self.k is not True:
+                    log.debug(f'{self.server}: Authenticating as "{self.domain}\\{self.username}"')
+                else:
+                    log.debug('Attempting Kerberos ccache login')
 
                 # pass the hash if requested
                 if self.nthash and not self.password:
@@ -78,6 +81,16 @@ class SMBClient:
                         nthash=self.nthash,
                         domain=self.domain,
                     )
+                # Use kerberos ccache - AES key not captured however - is it required?
+                if self.k is True:
+                    log.info("Logging in via Kerberos ccache")
+                    self.conn.kerberosLogin(self.username, 
+                        self.password, 
+                        self.domain, 
+                        self.lmhash, 
+                        self.nthash, 
+                        None, 
+                        self.dc_ip)
                 # otherwise, normal login
                 else:
                     self.conn.login(

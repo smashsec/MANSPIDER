@@ -35,6 +35,8 @@ class MANSPIDER:
         self.dir_blacklist      = options.exclude_dirnames
 
         self.no_download        = options.no_download
+        self.k                  = options.k
+        self.dc_ip              = options.dc_ip
 
         # applies "or" logic instead of "and"
         # e.g. file is downloaded if filename OR extension OR content match
@@ -204,6 +206,8 @@ class MANSPIDER:
                 self.password,
                 self.domain,
                 self.nthash,
+                self.k,
+                self.dc_ip,
             )
             logon_result = smb_client.login()
             if logon_result == False:
